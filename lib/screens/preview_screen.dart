@@ -84,7 +84,7 @@ class _PreviewScreenState extends State<PreviewScreen> {
     bool granted = await requestStoragePermission();
 
     if (!granted) {
-      if (context.mounted) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Storage permission denied')),
         );

@@ -42,13 +42,15 @@ class CropScreen extends StatelessWidget {
     if (croppedFile == null) {
       return;
     }
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(
-        builder: (_) => PreviewScreen(croppedImagePath: croppedFile.path),
-      ),
-      (route) => false,
-    );
+    if (context.mounted) {
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(
+          builder: (_) => PreviewScreen(croppedImagePath: croppedFile.path),
+        ),
+        (route) => false,
+      );
+    }
   }
 
   @override
