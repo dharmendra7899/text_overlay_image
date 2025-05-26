@@ -52,8 +52,7 @@ class MyTextOverlay {
 
     final paragraph = paragraphBuilder.build();
     const double textWidthMargin = 50;
-    final double textMaxWidth =
-        width - 80 /* mapThumb */ - 25 /* icon */ - textWidthMargin;
+    final double textMaxWidth = width - 80 - 25 - textWidthMargin;
     paragraph.layout(ui.ParagraphConstraints(width: textMaxWidth));
 
     final double textHeight = paragraph.height;
