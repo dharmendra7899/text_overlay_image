@@ -1,79 +1,68 @@
 import 'dart:io';
-import 'dart:isolate';
-import 'dart:ui';
+import 'dart:typed_data';
 
 import 'package:flutter/material.dart';
-import 'package:flutter_downloader/flutter_downloader.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:permission_handler/permission_handler.dart';
 
-@pragma('vm:entry-point')
-class DownloadService {
-  static final ReceivePort _port = ReceivePort();
-  static bool _isPortBound = false;
+class DownloadHelper {
+  final BuildContext context;
 
-  static ValueChanged<int>? _onProgress;
-  static VoidCallback? _onComplete;
-  static ValueChanged<String>? _onFinished;
+  DownloadHelper(this.context);
 
-  static void initialize() {
-    IsolateNameServer.removePortNameMapping('downloader_send_port');
-    IsolateNameServer.registerPortWithName(
-      _port.sendPort,
-      'downloader_send_port',
-    );
+  Future<bool> requestStoragePermission() async {
+    if (Platform.isAndroid) {
+      if (await Permission.storage.isGranted) return true;
+      if (await Permission.manageExternalStorage.isGranted) return true;
 
-    FlutterDownloader.registerCallback(downloadCallback);
+      await Permission.storage.request();
+      await Permission.manageExternalStorage.request();
 
-    if (!_isPortBound) {
-      _port.listen((dynamic data) {
-        String id = data[0];
-        DownloadTaskStatus status = DownloadTaskStatus.values[data[1]];
-        int progress = data[2];
+      return await Permission.storage.isGranted ||
+          await Permission.manageExternalStorage.isGranted;
+    }
+    return true;
+  }
 
-        _onProgress?.call(progress);
+  Future<void> saveToDownloads(Uint8List imageBytes, String fileName) async {
+    bool granted = await requestStoragePermission();
 
-        if (status == DownloadTaskStatus.complete) {
-          _onComplete?.call();
-          _onFinished?.call(id);
+    if (!granted) {
+      _showMessage('Storage permission denied');
+      return;
+    }
+
+    try {
+      Directory? downloadsDir;
+
+      if (Platform.isAndroid) {
+        downloadsDir = Directory('/storage/emulated/0/Download');
+        if (!downloadsDir.existsSync()) {
+          downloadsDir = await getExternalStorageDirectory();
         }
-      });
-      _isPortBound = true;
+      } else {
+        downloadsDir = await getApplicationDocumentsDirectory();
+      }
+
+      final filePath =
+          '${downloadsDir!.path}/$fileName${DateTime.now().millisecondsSinceEpoch}.png';
+
+      final file = File(filePath);
+      await file.writeAsBytes(imageBytes);
+
+      _showMessage('Downloaded to: $filePath');
+      debugPrint("File saved at: $filePath");
+    } catch (e) {
+      debugPrint("Save Error: $e");
+      _showMessage('Failed to save file');
     }
   }
 
-  static Future<void> downloadFile({
-    required String fileUrl,
-    required String fileName,
-    required ValueChanged<int> onProgress,
-    required VoidCallback onComplete,
-    required ValueChanged<String> onFinished,
-  }) async {
-    _onProgress = onProgress;
-    _onComplete = onComplete;
-    _onFinished = onFinished;
-
-    // final dir = await getApplicationDocumentsDirectory();
-    // var localPath = dir.path + fileName;
-    // final savedDir = Directory(localPath);
-
-    Directory? dir = Directory('/storage/emulated/0/Download');
-    if (!await dir.exists()) {
-      await dir.create(recursive: true);
+  void _showMessage(String message) {
+    if (context.mounted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(message)));
     }
-
-    await FlutterDownloader.enqueue(
-      url: fileUrl,
-      fileName: fileName,
-      savedDir: dir.path,
-      showNotification: true,
-      openFileFromNotification: true,
-    );
-  }
-
-  @pragma('vm:entry-point')
-  static void downloadCallback(String id, int status, int progress) {
-    final SendPort? send = IsolateNameServer.lookupPortByName(
-      'downloader_send_port',
-    );
-    send?.send([id, status, progress]);
   }
 }
