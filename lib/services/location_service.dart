@@ -18,8 +18,7 @@ class LocationDataModel {
 }
 
 class LocationService {
-  static const String googleMapsApiKey =
-      'AIzaSyAQW_V1fIJSXzYD5gjAh9wnztxLnE_pJ7E';
+  static const String googleMapsApiKey = 'YOUR_API_KEY_HERE';
 
   static Future<LocationDataModel> getLocationWithAddress() async {
     LocationPermission permission = await Geolocator.checkPermission();

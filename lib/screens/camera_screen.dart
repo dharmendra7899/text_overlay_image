@@ -63,38 +63,36 @@ class _CameraScreenState extends State<CameraScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Scaffold(
-        body:
-            _isCameraInitialized
-                ? Stack(
-                  alignment: Alignment.center,
-                  children: [
-                    CameraPreview(_controller),
-                    Positioned(
-                      bottom: 30,
-                      left: MediaQuery.of(context).size.width / 2 - 30,
-                      child: FloatingActionButton(
-                        onPressed: _takePicture,
-                        child: const Icon(Icons.camera_alt),
-                      ),
+    return Scaffold(
+      body:
+          _isCameraInitialized
+              ? Stack(
+                alignment: Alignment.center,
+                children: [
+                  CameraPreview(_controller),
+                  Positioned(
+                    bottom: 30,
+                    left: MediaQuery.of(context).size.width / 2 - 30,
+                    child: FloatingActionButton(
+                      onPressed: _takePicture,
+                      child: const Icon(Icons.camera_alt),
                     ),
-                    Positioned(
-                      top: 20,
-                      right: 20,
-                      child: IconButton(
-                        icon: const Icon(
-                          Icons.switch_camera,
-                          color: Colors.white,
-                          size: 30,
-                        ),
-                        onPressed: _switchCamera,
+                  ),
+                  Positioned(
+                    top: 20,
+                    right: 20,
+                    child: IconButton(
+                      icon: const Icon(
+                        Icons.switch_camera,
+                        color: Colors.white,
+                        size: 30,
                       ),
+                      onPressed: _switchCamera,
                     ),
-                  ],
-                )
-                : const Center(child: CircularProgressIndicator()),
-      ),
+                  ),
+                ],
+              )
+              : const Center(child: CircularProgressIndicator()),
     );
   }
 }
